@@ -30,10 +30,35 @@ $(document).ready(function() {
 
     $('#submit-message').click(function() {
       message.text = document.getElementById('input-box').value; // come from user input
+      var roomSelect = document.getElementById("roomSelect");
+      var roomName = roomSelect.options[roomSelect.selectedIndex].text;
+      message.roomname = roomName;
       // console.log(message);
       app.send(message);
-      // app.clearMessages();
-      // app.fetch();
+      app.clearMessages();
+      app.fetch();
+    });
+
+
+    // allow user to select room to post in
+    $('#submitRoom').click(function(){
+      var roomSelect = document.getElementById("roomSelect");
+      var roomName = roomSelect.options[roomSelect.selectedIndex].text.replace(/[=,0-9,!,@,#,$,%,^,&,*,9,\/,\.\?,\~,:,\+,\-, ,\",\',\\]/ig, '');
+      console.log(roomName)
+      $(".chat").hide();
+      
+      $('.chat').filter('.' + roomName).show();
+     
+     //befriend
+     //show username messages
+     $('') 
+
+    });
+
+    // allow user to create new room to add to room list
+    $('#createRoom').click(function() {
+      var newRoom = document.getElementById('input-room-box').value;
+      app.renderRoom(newRoom);
     });
 
     // send message
@@ -68,7 +93,7 @@ $(document).ready(function() {
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Message sent');
-        console.log('SEND: ' + data);
+        // console.log('SEND: ' + data);
         return data;
         // add to message object in server
       },
@@ -79,6 +104,8 @@ $(document).ready(function() {
     });
   };
 
+  app.rooms = {};
+
   app.fetch = function() {
     $.ajax({
       // This is the url you should use to communicate with the parse API server.
@@ -86,24 +113,28 @@ $(document).ready(function() {
       type: 'GET',
       // data: JSON.stringify(message),
       contentType: 'application/json',
+      data: 'order=-createdAt',
       // dataType: 'json',
       // dataFilter: function(data) {
       //   // sort by date
-      // }
+      // },
       success: function (data) {
         console.log('chatterbox: Messages recieved');
-        console.log('FETCH (first): ' + data.results[0].text);
-        console.log('FETCH (last): ' + data.results[data.results.length - 1].text);
+        // console.log('FETCH (first): ' + JSON.stringify(data.results[0]));
+        // console.log('FETCH (last): ' + data.results[data.results.length - 1].text);
         // iterate through messages
         for (var i = 0; i < data.results.length; i++) {
+          // console.log(data.results[i]);
           app.renderMessage(data.results[i]);
-          // iterate over options list
-          // for (var j = 0; j < $('#roomSelect').childNodes.length; j++) {
-          //   // check that chil
-          //   if () {
-          //     app.renderRoom(data.results[i].roomname);
-          //   }
-          // }
+          // console.log(data.results[i].roomname)
+          // if roomname does not exist in the rooms object
+          if (app.rooms[data.results[i].roomname] === undefined && data.results[i].roomname !== "" && data.results[i].roomname !== undefined) {
+            // add roomname to object as key-value pair
+            // console.log(app.rooms)
+            app.rooms[data.results[i].roomname] = data.results[i].roomname;
+            // add roomname to #roomSelect
+            app.renderRoom(data.results[i].roomname);
+          }
         }
       },
       error: function () {
@@ -139,7 +170,8 @@ $(document).ready(function() {
     // add text container to message container
     renderedMessage.append(renderedText);
     renderedMessage.addClass('chat');
-
+    var fixedRoom = message.roomname.replace(/[=,0-9,!,@,#,$,%,^,&,*,9,\/,\.\?,\~,:,\+,\-, ,\",\',\\]/ig, '');
+    renderedMessage.addClass(fixedRoom);
     // add message container to big chats section
     $('#chats').append(renderedMessage);
   };
